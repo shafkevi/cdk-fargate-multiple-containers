@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import "source-map-support/register";
 import { App } from "@aws-cdk/core";
-import Template from "../lib/stacks/TemplateStack";
+import MultiContainerStack from "../lib/stacks/MultiContainerStack";
 
 
 const app = new App();
@@ -13,7 +13,9 @@ const props = {
       process.env.CDK_DEPLOY_REGION ??
       process.env.CDK_DEFAULT_REGION ??
       "us-east-1"
-  }
+  },
+  domain: process.env.DOMAIN || undefined,
+  certificateArn: process.env.CERTIFICATE_ARN || undefined,
 };
 
-new Template(app, "Template", props);
+new MultiContainerStack(app, "MultiContainers", props);
