@@ -4,17 +4,11 @@ import { Construct, RemovalPolicy } from "@aws-cdk/core";
 import { LogGroup, RetentionDays } from "@aws-cdk/aws-logs";
 import { ICertificate } from "@aws-cdk/aws-certificatemanager";
 import { 
-  ApplicationLoadBalancer, 
-  ListenerCondition, 
-  ApplicationProtocol,
-} from "@aws-cdk/aws-elasticloadbalancingv2";
-import { 
   AwsLogDriver, 
   Cluster, 
   ContainerImage, 
   FargateTaskDefinition,
   FargateService,
-  Protocol,
 } from "@aws-cdk/aws-ecs";
 
 export interface FargateProps {
@@ -24,6 +18,7 @@ export interface FargateProps {
 
 export default class Fargate extends Construct {
   private assetPath = path.join(__dirname, "..", "..", "src", "ecs");
+  public readonly service: FargateService;
 
   constructor(scope: Construct, id: string, props: FargateProps) {
     super(scope, id);
@@ -87,45 +82,12 @@ export default class Fargate extends Construct {
       containerPort: 8081,
     });
 
-    const service = new FargateService(this, "FargateService", {
+    this.service = new FargateService(this, "FargateService", {
       cluster,
       taskDefinition,
-      serviceName: "FargateService",
+      serviceName: `${id}Service`,
       desiredCount: 1,
     });
-
-
-    const loadBalancer = new ApplicationLoadBalancer(this, "LoadBalancer", {
-      vpc,
-      internetFacing: true
-    });
-
-
-    const loadBalancerListener = loadBalancer
-      .addListener("Listener", { 
-        port: 443,
-        certificates: certificate ? [certificate] : undefined,
-      });
-
-    loadBalancerListener 
-      .addTargets("ApiTarget", {
-        port: 8080, // api port
-        targets: [service]
-      });
-    loadBalancerListener
-      .addTargets("AppTarget", {
-        port: 8081, // app port
-        protocol: ApplicationProtocol.HTTP,
-        conditions: [
-          ListenerCondition.pathPatterns(['/app/*'])
-        ],
-        priority: 1,
-        targets: [service.loadBalancerTarget({
-          containerName: 'AppContainer',
-          containerPort: 8081,
-          protocol: Protocol.TCP
-        })]
-      });
 
   }
 }
